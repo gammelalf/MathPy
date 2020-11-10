@@ -1,30 +1,9 @@
-from expr_parser.tokens import tokenize as _tokenize
-from expr_parser.group import group as _group
 from expr_parser.tree import BinOp as _BinOp
 from expr_parser.tree import UnaryOp as _UnaryOp
 from expr_parser.tree import Operator as _Operator
 
 
-__all__ = [
-    "parse",
-    "evaluate",
-    "function"
-]
-
-
 def _process_scope(lst):
-    while len(lst) > 1:
-        index = 1
-        while index + 2 < len(lst) and lst[index].priority < lst[index+2].priority:
-            index += 2
-
-        left, operator, right = lst[index - 1:index + 2]
-        lst = lst[:index - 1] + [_BinOp(left, operator, right)] + lst[index + 2:]
-
-    return lst[0]
-
-
-def _new_process_scope(lst):
     def consume_operator(i):
         op = lst[i]
         if i+1 == len(lst) or isinstance(lst[i+1], _Operator):
@@ -55,16 +34,3 @@ def _new_process_scope(lst):
         lst = consume_operator(index)
 
     return lst[0]
-
-
-def parse(string):
-    return _group(_tokenize(string), process_scope=_new_process_scope)
-
-
-def evaluate(string):
-    return parse(string).eval()
-
-
-def function(string):
-    tree_ = parse(string)
-    return lambda x: tree_.eval(x=x)
