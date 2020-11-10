@@ -11,20 +11,14 @@ __all__ = [
 ]
 
 
-# TODO bad runtime ~O(n^2)
 def _process_scope(lst):
     while len(lst) > 1:
-        # Find the highest priority operator
-        index, priority = 0, float("-inf")
-        for i, item in enumerate(lst):
-            if not isinstance(item, _Operator):
-                continue
-            else:
-                if priority < item.priority:
-                    index, priority = i, item.priority
+        index = 1
+        while index + 2 < len(lst) and lst[index].priority < lst[index+2].priority:
+            index += 2
 
-        left, operator, right = lst[index-1:index+2]
-        lst = lst[:index-1] + [_Operation(left, operator, right)] + lst[index+2:]
+        left, operator, right = lst[index - 1:index + 2]
+        lst = lst[:index - 1] + [_Operation(left, operator, right)] + lst[index + 2:]
 
     return lst[0]
 

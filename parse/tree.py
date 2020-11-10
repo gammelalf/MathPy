@@ -105,6 +105,9 @@ class _Node:
     def eval(self, **namespace: _Numeric) -> _Numeric:
         raise NotImplementedError()
 
+    def __call__(self):
+        return self.eval()
+
 
 class Operation(_Node):
 
