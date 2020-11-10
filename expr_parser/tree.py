@@ -1,8 +1,7 @@
-import math as _math
 from typing import (TypeVar as _TypeVar,
                     Dict as _Dict,
                     Set as _Set,
-                    Union as _Union, Dict)
+                    Union as _Union)
 
 from expr_parser.operators.base import Operator as _Operator
 
@@ -12,6 +11,41 @@ _Numeric = _TypeVar("_Numeric", int, float, complex)
 
 class MissingVariable(RuntimeError):
     pass
+
+
+class Tree:
+
+    def __init__(self, root: "_Node", initial_namespace=None):
+        self.root = root
+        if initial_namespace is None:
+            self.initial_namespace = {}
+        else:
+            self.initial_namespace = initial_namespace
+
+    def _get_effective_namespace(self, namespace: _Dict):
+        return dict(self.initial_namespace, **namespace)
+
+    @property
+    def used_variables(self):
+        return self.root.used_variables
+
+    def eval(self, **namespace: _Numeric) -> _Numeric:
+        namespace = self._get_effective_namespace(namespace)
+        for var in self.used_variables:
+            if var not in namespace:
+                raise MissingVariable(var)
+        return self.root._eval(namespace)
+
+    def simplified(self, **namespace: _Numeric) -> "Tree":
+        namespace = self._get_effective_namespace(namespace)
+        root = self.root._eval_partial(namespace)
+        if isinstance(root, _Node):
+            return Tree(root)
+        else:
+            return Tree(Constant(root))
+
+    def __call__(self) -> _Numeric:
+        return self.eval()
 
 
 class _Node:
@@ -33,33 +67,6 @@ class _Node:
         Operation uses this function to determine if it's a unary or binary operation.
         """
         return False
-
-    def _get_effective_namespace(self, namespace: _Dict[str, _Numeric]) -> _Dict[str, _Numeric]:
-        try:
-            return dict(self._namespace, **namespace)
-        except AttributeError:
-            return namespace
-
-    def set_initial_namespace(self, namespace: _Dict[str, _Numeric]):
-        self._namespace = namespace
-
-    def eval(self, **namespace: _Numeric) -> _Numeric:
-        namespace = self._get_effective_namespace(namespace)
-        for var in self.used_variables:
-            if var not in namespace:
-                raise MissingVariable(var)
-        return self._eval(namespace)
-
-    def simplify(self, **namespace: _Numeric) -> "_Node":
-        namespace = self._get_effective_namespace(namespace)
-        root = self._eval_partial(namespace)
-        if isinstance(root, _Node):
-            return root
-        else:
-            return Constant(root)
-
-    def __call__(self) -> _Numeric:
-        return self.eval()
 
 
 class Operation(_Node):

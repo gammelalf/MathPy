@@ -3,7 +3,8 @@ import math as _math
 from typing import Dict as _Dict
 
 from expr_parser.operators.base import Operator as _Operator
-from expr_parser.tree import (Variable as _Var,
+from expr_parser.tree import (Tree as _Tree,
+                              Variable as _Var,
                               Constant as _Const,
                               tree_from_list as _tree_from_list)
 from expr_parser.operators.default import (Implicit as _Implicit,
@@ -153,11 +154,10 @@ class Parser:
 
     def parse(self, expr: str):
         if self._is_operator("==IMPLICIT=="):
-            tree = self._group(self._tokenize_with_implicit(expr), process_scope=_tree_from_list)
+            root = self._group(self._tokenize_with_implicit(expr), process_scope=_tree_from_list)
         else:
-            tree = self._group(self._tokenize(expr), process_scope=_tree_from_list)
-        tree.set_initial_namespace(self.constants)
-        return tree
+            root = self._group(self._tokenize(expr), process_scope=_tree_from_list)
+        return _Tree(root, self.constants)
 
 
 __numeric_re = _re.compile(r"^(\d+)?(\.\d*)?$")
