@@ -35,42 +35,43 @@ The main API provides 3 functions (each takes an expression):
 
 ## Advanced Usage
 
-I try to make the parsing as modular as possible.
+### The Parser object
 
-Currently this means it is very easy to use custom operators:
+The basic API is just a shortcut for instancing a Parser object and calling its methods.
+
+A Parser object contains the information required for parsing an expression:
+- What brackets are used
+- Which operators are used
+
+These can be controled with:
+- `Parser.add_brackets(opening, closing)`
+- `Parser.add_operator(operator)`
+
+The static method `default()` instances an object and populates it with the default brackets and operators.
+This method is used to provide the basic API's parser.
 
 ### Custom Operators
 
-A custom operator can be created by subclassing `expr_parser.tree.Operator` and providing the following:
+An operator object requires the following parameters:
 
-- `SYMBOL`: class constant containing the operator's string representation
-- `priority`: object attribute for determening the operation's execution order
-- `binary`: object method (optional) for using the operator between two values x and y
-- `unary`: object method (optional) for using the operator in front of a single value x
+- `symbol`: sthe operator's string representation
+- `priority`: integer for determening the operation's execution order
+- `binary`: method for using the operator between two values x and y
+- `unary`: method for using the operator in front of a single value x
 
 The `Operator` class provides the `@Operator.handle_callables` decorator to extend the binary method to work with functions as well as numbers.
 
 ```python
-from expr_parser.tree import Operator
+from expr_parser.operators.base import Operator
 
-class Modulo(Operator):
-
-  SYMBOL = "%"
-
-  @property
-  def priority(self):
-    return 20
-
-  @Operator.handle_callables
-  def binary(self, left, right):
-    return left % right
+Mod = Operator(
+  symbol="%",
+  priority=20
+  binary=Operator.handle_callables(lambda x, y: x % y)
+)
 ```
 
-Just by creating the class, it will be registered and usable.
-
-The basic math operators +, -, *, /, ^ are implemented in `expr_parser.operators.basic`.
-Since the classes just need to be declared in order to register a operator.
-Importing this file will register them.
+The basic math operators +, -, *, /, ^ are implemented in `expr_parser.operators.default`.
 
 In `expr_parser.operators.dice` is another example for a custom operator.
 It's the dice operator known from tabletop-roleplays,
