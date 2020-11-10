@@ -10,11 +10,11 @@ class Operator:
         self.unary = unary
         self.binary = binary
 
-    def __call__(self, right, left=None):
-        if left is None:
-            return self.unary(right)
+    def __call__(self, x, y=None):
+        if y is None:
+            return self.unary(x)
         else:
-            return self.binary(left, right)
+            return self.binary(x, y)
 
     @staticmethod
     def handle_callables(func):

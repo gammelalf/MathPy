@@ -74,7 +74,10 @@ class Operation(_Node):
         self._used_variables = self.x.used_variables | self.y.used_variables
 
     def _eval(self, namespace: _Dict[str, _Numeric]) -> _Numeric:
-        return self.operator(self.x._eval(namespace), self.y._eval(namespace))
+        x = self.x._eval(namespace)
+        y = self.y._eval(namespace)
+
+        return self.operator(x, y)
 
     def _eval_partial(self, namespace: _Dict[str, _Numeric]) -> _Union[_Node, _Numeric]:
         x = self.x._eval_partial(namespace)
