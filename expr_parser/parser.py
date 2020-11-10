@@ -1,5 +1,8 @@
-from expr_parser.tokens import tokenize as _tokenize
+from expr_parser.parse_numeric import _is_numeric, _parse_numeric_const
 from expr_parser.build_tree import _process_scope
+from expr_parser.tree import Operator as _Operator
+from expr_parser.tree import Var as _Var
+from expr_parser.tree import Const as _Const
 
 
 class Parser:
@@ -10,14 +13,71 @@ class Parser:
             "[": "]"
         }
 
+        self.operators = {
+        }
+
+    def add_operator(self, operator: _Operator):
+        self.operators[operator.SYMBOL] = operator
+
     def _is_opening_bracket(self, string: str) -> bool:
         return string in self.brackets.keys()
 
     def _is_closing_bracket(self, string: str) -> bool:
         return string in self.brackets.values()
 
-    def _is_brackets(self, string: str) -> bool:
+    def _is_bracket(self, string: str) -> bool:
         return self._is_opening_bracket(string) or self._is_closing_bracket(string)
+
+    def _is_operator(self, string: str) -> bool:
+        return string in self.operators.keys()
+
+    def _is_valid_token(self, s: str):
+        return _is_numeric(s) or self._is_bracket(s) or self._is_operator(s) or s.isidentifier()
+
+    def _create_token(self, s: str):
+        if self._is_bracket(s):
+            return s
+        elif self._is_operator(s):
+            return self.operators[s]
+        elif s.isidentifier():
+            return _Var(s)
+        elif _is_numeric(s):
+            return _parse_numeric_const(s)
+        else:
+            raise ValueError(f"Unknown token: '{s}'")
+
+    def _tokenize(self, string: str):
+        token = ""
+        for char in string:
+            if char == " ":
+                if token != "":
+                    yield self._create_token(token)
+                    token = ""
+            elif self._is_valid_token(token + char):
+                token += char
+            else:
+                yield self._create_token(token)
+                token = char
+
+        if token != "":
+            yield self._create_token(token)
+
+    def _tokenize_with_implicit(self, string):
+        iterator = self._tokenize(string)
+
+        try:
+            token = next(iterator)
+        except StopIteration:
+            return
+
+        for next_token in iterator:
+            yield token
+            if isinstance(token, (_Const, _Var)) and (
+                    isinstance(next_token, (_Const, _Var)) or self._is_opening_bracket(next_token)):
+                yield self.operators["==IMPLICIT=="]
+            token = next_token
+
+        yield token
 
     def _group(self, tokens, process_scope=lambda x: x):
         """
@@ -49,7 +109,7 @@ class Parser:
 
                 # Check if the opening bracket matches the closing one
                 if self.brackets[opening] != token:
-                    raise SyntaxError("Got missmatching brackets")
+                    raise SyntaxError("Got mismatching brackets")
 
                 # Process just finished scope
                 scope[-1] = process_scope(scope[-1])
@@ -62,8 +122,8 @@ class Parser:
         if len(stack) > 0:
             raise SyntaxError("Missing closing bracket")
 
-        # Process and returned finished outest scope
+        # Process and returned finished outermost scope
         return process_scope(result)
 
     def parse(self, expr: str):
-        return self._group(_tokenize(expr), process_scope=_process_scope)
+        return self._group(self._tokenize_with_implicit(expr), process_scope=_process_scope)
