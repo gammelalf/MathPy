@@ -1,6 +1,8 @@
 import math as _math
-from typing import TypeVar as _TypeVar
-from typing import Dict as _Dict
+from typing import (TypeVar as _TypeVar,
+                    Dict as _Dict,
+                    Set as _Set,
+                    Union as _Union)
 
 from expr_parser.operators.base import Operator as _Operator
 
@@ -23,17 +25,29 @@ class _Node:
         "tan": _math.tan,
     }
 
-    def _is_none(self):
-        return False
-
     def _eval(self, namespace: _Dict[str, _Numeric]) -> _Numeric:
         raise NotImplementedError()
 
-    def _eval_partial(self, namespace):
+    def _eval_partial(self, namespace: _Dict[str, _Numeric]) -> _Union["_Node", _Numeric]:
         raise NotImplementedError()
+
+    @property
+    def used_variables(self) -> _Set[str]:
+        raise NotImplementedError()
+
+    def _is_none(self) -> bool:
+        """
+        Overwritten in Constant to check if it's internal value is None.
+
+        Operation uses this function to determine if it's a unary or binary operation.
+        """
+        return False
 
     def eval(self, **namespace: _Numeric) -> _Numeric:
         namespace = dict(_Node.MATH_CONST, **namespace)
+        for var in self.used_variables:
+            if var not in namespace:
+                raise MissingVariable(var)
         return self._eval(namespace)
 
     def simplify(self, **namespace: _Numeric) -> "_Node":
@@ -44,7 +58,7 @@ class _Node:
         else:
             return Constant(root)
 
-    def __call__(self):
+    def __call__(self) -> _Numeric:
         return self.eval()
 
 
@@ -57,21 +71,26 @@ class Operation(_Node):
             self.y = Constant(None)
         else:
             self.y = y
+        self._used_variables = self.x.used_variables | self.y.used_variables
 
     def _eval(self, namespace: _Dict[str, _Numeric]) -> _Numeric:
         return self.operator(self.x._eval(namespace), self.y._eval(namespace))
 
-    def _eval_partial(self, namespace):
+    def _eval_partial(self, namespace: _Dict[str, _Numeric]) -> _Union[_Node, _Numeric]:
         x = self.x._eval_partial(namespace)
         y = self.y._eval_partial(namespace)
 
         if not isinstance(x, _Node) and not isinstance(y, _Node):
             return self.operator(x, y)
         if not isinstance(x, _Node):
-            left = Constant(x)
+            x = Constant(x)
         else:
-            right = Constant(y)
+            y = Constant(y)
         return Operation(self.operator, x, y)
+
+    @property
+    def used_variables(self) -> _Set[str]:
+        return self._used_variables
 
     def __repr__(self):
         return f"Operation({self.operator}, {repr(self.x)}, {repr(self.y)})"
@@ -94,8 +113,12 @@ class Constant(_Node):
     def _eval(self, namespace: _Dict[str, _Numeric]) -> _Numeric:
         return self.value
 
-    def _eval_partial(self, namespace):
+    def _eval_partial(self, namespace: _Dict[str, _Numeric]) -> _Union[_Node, _Numeric]:
         return self.value
+
+    @property
+    def used_variables(self) -> _Set[str]:
+        return set()
 
     def __repr__(self):
         return f"Const({repr(self.value)})"
@@ -115,11 +138,15 @@ class Variable(_Node):
         else:
             raise MissingVariable(self.name)
 
-    def _eval_partial(self, namespace):
+    def _eval_partial(self, namespace: _Dict[str, _Numeric]) -> _Union[_Node, _Numeric]:
         try:
             return self._eval(namespace)
         except MissingVariable:
             return Variable(self.name)
+
+    @property
+    def used_variables(self) -> _Set[str]:
+        return {self.name}
 
     def __repr__(self):
         return f"Var({repr(self.name)})"
