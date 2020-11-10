@@ -13,7 +13,7 @@ class _Implicit(_Operator):
 
     @property
     def priority(self):
-        return 20
+        return 10
 
     def binary(self, x, y):
         return x * y
