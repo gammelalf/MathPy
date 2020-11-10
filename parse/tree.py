@@ -22,6 +22,18 @@ class Operator(metaclass=_OperatorMeta):
     def priority(self):
         raise NotImplementedError()
 
+    def binary(self, x, y):
+        raise NotImplementedError(f"{self} can't be used as a binary operator")
+
+    def unary(self, x):
+        raise NotImplementedError(f"{self} can't be used as a unary operator")
+
+    def __call__(self, right, left=None):
+        if left is None:
+            return self.unary(right)
+        else:
+            return self.binary(left, right)
+
     @staticmethod
     def get(symbol: str) -> "Operator":
         return _OperatorMeta.REGISTRY[symbol]()
@@ -29,9 +41,6 @@ class Operator(metaclass=_OperatorMeta):
     @staticmethod
     def is_operator(symbol: str) -> bool:
         return symbol in _OperatorMeta.REGISTRY
-
-    def __call__(self, x, y):
-        raise NotImplementedError
 
     def __repr__(self):
         return self.__class__.__name__+"()"
@@ -48,8 +57,11 @@ class _Add(Operator):
     def priority(self):
         return 0
 
-    def __call__(self, x, y):
+    def binary(self, x, y):
         return x + y
+
+    def unary(self, x):
+        return x
 
 
 class _Sub(Operator):
@@ -60,8 +72,11 @@ class _Sub(Operator):
     def priority(self):
         return 0
 
-    def __call__(self, x, y):
+    def binary(self, x, y):
         return x - y
+
+    def unary(self, x):
+        return -x
 
 
 class _Mul(Operator):
@@ -72,8 +87,11 @@ class _Mul(Operator):
     def priority(self):
         return 10
 
-    def __call__(self, x, y):
+    def binary(self, x, y):
         return x * y
+
+    def unary(self, x):
+        super(_Mul, self).unary(x)
 
 
 class _Div(Operator):
@@ -84,8 +102,11 @@ class _Div(Operator):
     def priority(self):
         return 10
 
-    def __call__(self, x, y):
+    def binary(self, x, y):
         return x / y
+
+    def unary(self, x):
+        super(_Div, self).unary(x)
 
 
 class _Pow(Operator):
@@ -96,8 +117,11 @@ class _Pow(Operator):
     def priority(self):
         return 20
 
-    def __call__(self, x, y):
+    def binary(self, x, y):
         return x ** y
+
+    def unary(self, x):
+        super(_Pow, self).unary(x)
 
 
 class _Node:
@@ -109,7 +133,7 @@ class _Node:
         return self.eval()
 
 
-class Operation(_Node):
+class BinOp(_Node):
 
     def __init__(self, left: _Node, operator: Operator, right: _Node):
         self.left = left
@@ -117,7 +141,17 @@ class Operation(_Node):
         self.operator = operator
 
     def eval(self, **namespace: _Numeric) -> _Numeric:
-        return self.operator(self.left.eval(**namespace), self.right.eval(**namespace))
+        return self.operator(self.right.eval(**namespace), self.left.eval(**namespace))
+
+
+class UnaryOp(_Node):
+
+    def __init__(self, operator: Operator, child: _Node):
+        self.child = child
+        self.operator = operator
+
+    def eval(self, **namespace: _Numeric) -> _Numeric:
+        return self.operator(self.child.eval(**namespace))
 
 
 class Const(_Node):
