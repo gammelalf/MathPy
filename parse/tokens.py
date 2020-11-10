@@ -6,6 +6,10 @@ from parse.tree import Operator, Const, Var
 __numeric_re = re.compile(r"^(\d+)?(\.\d*)?( ?i)?$")
 
 
+def _is_numeric(string):
+    return __numeric_re.match(string) is not None
+
+
 def _parse_numeric_const(string) -> Const:
     match = __numeric_re.match(string)
     if match is None:
@@ -39,31 +43,37 @@ BRACKETS = {
         }
 
 
-def tokenize(string):
-    unused = ""
+def _is_bracket(string):
+    return string in BRACKETS.keys() or string in BRACKETS.values()
 
-    def consume_char(c: str):
-        if Operator.is_operator(c):
-            return Operator.get(c)
-        elif c in BRACKETS.keys() or c in BRACKETS.values():
-            return c
 
-    def consume_string(s: str):
-        if s != "i" and s.isidentifier():
+def tokenize(string: str):
+    def is_valid_token(s: str):
+        return _is_numeric(s) or _is_bracket(s) or Operator.is_operator(s) or s.isidentifier()
+
+    def create_token(s: str):
+        if _is_bracket(s):
+            return s
+        elif Operator.is_operator(s):
+            return Operator.get(s)
+        elif s.isidentifier():
             return Var(s)
-        else:
+        elif _is_numeric(s):
             return _parse_numeric_const(s)
-
-    for char in string.replace(" ", ""):
-        token = consume_char(char)
-
-        if token is None:
-            unused += char
         else:
-            if unused != "":
-                yield consume_string(unused)
-                unused = ""
-            yield token
+            raise ValueError(f"Unknown token: '{s}'")
 
-    if unused != "":
-        yield consume_string(unused)
+    token = ""
+    for char in string:
+        if char == " ":
+            if token != "":
+                yield create_token(token)
+                token = ""
+        elif is_valid_token(token+char):
+            token += char
+        else:
+            yield create_token(token)
+            token = char
+
+    if token != "":
+        yield create_token(token)
