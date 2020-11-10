@@ -3,7 +3,7 @@ import re
 from parse.tree import Operator, Const, Var
 
 
-__numeric_re = re.compile(r"^(-?\d+)(\.\d*)?( ?i)?$")
+__numeric_re = re.compile(r"^(\d+)?(\.\d*)?( ?i)?$")
 
 
 def _parse_numeric_const(string) -> Const:
@@ -11,6 +11,14 @@ def _parse_numeric_const(string) -> Const:
     if match is None:
         raise ValueError(f"'{string}' is not a compatible numeric")
     leading, decimals, imaginary = match.groups()
+
+    # A decimal dot without leading digits
+    if decimals and not leading:
+        leading = "0"
+
+    # Single i without leading or decimal digits
+    if imaginary and not leading:
+        leading = "1"
 
     if imaginary:
         if decimals:
@@ -41,7 +49,7 @@ def tokenize(string):
             return c
 
     def consume_string(s: str):
-        if s.isidentifier():
+        if s != "i" and s.isidentifier():
             return Var(s)
         else:
             return _parse_numeric_const(s)
