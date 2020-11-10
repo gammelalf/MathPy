@@ -1,4 +1,5 @@
 import re
+from functools import wraps
 
 from parse.tree import Operator, Const, Var
 
@@ -47,7 +48,7 @@ def _is_bracket(string):
     return string in BRACKETS.keys() or string in BRACKETS.values()
 
 
-def tokenize(string: str):
+def _tokenize(string: str):
     def is_valid_token(s: str):
         return _is_numeric(s) or _is_bracket(s) or Operator.is_operator(s) or s.isidentifier()
 
@@ -77,3 +78,24 @@ def tokenize(string: str):
 
     if token != "":
         yield create_token(token)
+
+
+def _add_implicit_operator(iterable):
+    iterator = iter(iterable)
+
+    try:
+        token = next(iterator)
+    except StopIteration:
+        return
+
+    for next_token in iterator:
+        yield token
+        if not isinstance(token, Operator) and not isinstance(next_token, Operator):
+            yield Operator.get("")
+        token = next_token
+
+    yield token
+
+
+def tokenize(string):
+    yield from _add_implicit_operator(_tokenize(string))
