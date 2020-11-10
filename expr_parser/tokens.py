@@ -1,7 +1,7 @@
 import re
-from functools import wraps
 
 from expr_parser.tree import Operator, Const, Var
+
 
 __numeric_re = re.compile(r"^(\d+)?(\.\d*)?( ?i)?$")
 
@@ -96,7 +96,7 @@ def _add_implicit_operator(iterable):
         if (isinstance(token, Const) and isinstance(next_token, Var)) \
                 or (isinstance(token, Var) and isinstance(next_token, Var)) \
                 or (isinstance(token, Var) and _is_opening_bracket(next_token)):
-            yield Operator.get("")
+            yield Operator.get("==IMPLICIT==")
         token = next_token
 
     yield token
