@@ -8,6 +8,10 @@ from expr_parser.operators.base import Operator as _Operator
 _Numeric = _TypeVar("_Numeric", int, float, complex)
 
 
+class MissingVariable(RuntimeError):
+    pass
+
+
 class _Node:
 
     MATH_CONST = {
@@ -19,44 +23,78 @@ class _Node:
         "tan": _math.tan,
     }
 
+    def _is_none(self):
+        return False
+
     def _eval(self, namespace: _Dict[str, _Numeric]) -> _Numeric:
+        raise NotImplementedError()
+
+    def _eval_partial(self, namespace):
         raise NotImplementedError()
 
     def eval(self, **namespace: _Numeric) -> _Numeric:
         namespace = dict(_Node.MATH_CONST, **namespace)
         return self._eval(namespace)
 
+    def simplify(self, **namespace: _Numeric) -> "_Node":
+        namespace = dict(_Node.MATH_CONST, **namespace)
+        root = self._eval_partial(namespace)
+        if isinstance(root, _Node):
+            return root
+        else:
+            return Constant(root)
+
     def __call__(self):
         return self.eval()
 
 
-class BinOp(_Node):
+class Operation(_Node):
 
-    def __init__(self, left: _Node, operator: _Operator, right: _Node):
-        self.left = left
-        self.right = right
+    def __init__(self, operator: _Operator, x: _Node, y: _Node = None):
         self.operator = operator
+        self.x = x
+        if y is None:
+            self.y = Constant(None)
+        else:
+            self.y = y
 
     def _eval(self, namespace: _Dict[str, _Numeric]) -> _Numeric:
-        return self.operator(self.right._eval(namespace), self.left._eval(namespace))
+        return self.operator(self.x._eval(namespace), self.y._eval(namespace))
+
+    def _eval_partial(self, namespace):
+        x = self.x._eval_partial(namespace)
+        y = self.y._eval_partial(namespace)
+
+        if not isinstance(x, _Node) and not isinstance(y, _Node):
+            return self.operator(x, y)
+        if not isinstance(x, _Node):
+            left = Constant(x)
+        else:
+            right = Constant(y)
+        return Operation(self.operator, x, y)
+
+    def __repr__(self):
+        return f"Operation({self.operator}, {repr(self.x)}, {repr(self.y)})"
+
+    def __str__(self):
+        if self.y._is_none():
+            return f"({self.operator} {self.x})"
+        else:
+            return f"({self.x} {self.operator} {self.y})"
 
 
-class UnaryOp(_Node):
-
-    def __init__(self, operator: _Operator, child: _Node):
-        self.child = child
-        self.operator = operator
-
-    def _eval(self, namespace: _Dict[str, _Numeric]) -> _Numeric:
-        return self.operator(self.child._eval(namespace))
-
-
-class Const(_Node):
+class Constant(_Node):
 
     def __init__(self, value: _Numeric):
         self.value = value
 
+    def _is_none(self):
+        return self.value is None
+
     def _eval(self, namespace: _Dict[str, _Numeric]) -> _Numeric:
+        return self.value
+
+    def _eval_partial(self, namespace):
         return self.value
 
     def __repr__(self):
@@ -66,13 +104,22 @@ class Const(_Node):
         return str(self.value)
 
 
-class Var(_Node):
+class Variable(_Node):
 
     def __init__(self, name: str):
         self.name = name
 
     def _eval(self, namespace: _Dict[str, _Numeric]) -> _Numeric:
-        return namespace[self.name]
+        if self.name in namespace:
+            return namespace[self.name]
+        else:
+            raise MissingVariable(self.name)
+
+    def _eval_partial(self, namespace):
+        try:
+            return self._eval(namespace)
+        except MissingVariable:
+            return Variable(self.name)
 
     def __repr__(self):
         return f"Var({repr(self.name)})"
@@ -94,9 +141,9 @@ def tree_from_list(lst):
             left = None
 
         if left is None:
-            return lst[:i] + [UnaryOp(op, right)] + lst[i+2:]
+            return lst[:i] + [Operation(op, right)] + lst[i+2:]
         else:
-            return lst[:i-1] + [BinOp(left, op, right)] + lst[i+2:]
+            return lst[:i-1] + [Operation(op, left, right)] + lst[i + 2:]
 
     while len(lst) > 1:
         if isinstance(lst[0], _Operator):
