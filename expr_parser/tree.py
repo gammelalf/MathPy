@@ -71,7 +71,10 @@ class _Node:
     MATH_CONST = {
         "e": _math.e,
         "pi": _math.pi,
-        "i": 1j
+        "i": 1j,
+        "sin": _math.sin,
+        "cos": _math.cos,
+        "tan": _math.tan,
     }
 
     def _eval(self, namespace: _Dict[str, _Numeric]) -> _Numeric:
