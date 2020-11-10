@@ -15,6 +15,8 @@ class MissingVariable(RuntimeError):
 
 class Tree:
 
+    __slots__ = ["root", "initial_namespace"]
+
     def __init__(self, root: "_Node", initial_namespace=None):
         self.root = root
         if initial_namespace is None:
@@ -71,6 +73,8 @@ class _Node:
 
 class Operation(_Node):
 
+    __slots__ = ["operator", "x", "y"]
+
     def __init__(self, operator: _Operator, x: _Node, y: _Node = None):
         self.operator = operator
         self.x = x
@@ -94,7 +98,7 @@ class Operation(_Node):
             return self.operator(x, y)
         if not isinstance(x, _Node):
             x = Constant(x)
-        else:
+        if not isinstance(y, _Node):
             y = Constant(y)
         return Operation(self.operator, x, y)
 
@@ -113,6 +117,8 @@ class Operation(_Node):
 
 
 class Constant(_Node):
+
+    __slots__ = ["value"]
 
     def __init__(self, value: _Numeric):
         self.value = value
@@ -138,6 +144,8 @@ class Constant(_Node):
 
 
 class Variable(_Node):
+
+    __slots__ = ["name"]
 
     def __init__(self, name: str):
         self.name = name
