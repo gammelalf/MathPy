@@ -1,24 +1,36 @@
 import re as _re
+from typing import Dict as _Dict
 
 from expr_parser.build_tree import _process_scope
-from expr_parser.operators.base import Operator as _Operator
 from expr_parser.tree import Var as _Var
 from expr_parser.tree import Const as _Const
+from expr_parser.operators.base import Operator as _Operator
+from expr_parser.operators.default import (Implicit as _Implicit,
+                                           Add as _Add,
+                                           Sub as _Sub,
+                                           Mul as _Mul,
+                                           Div as _Div,
+                                           Pow as _Pow)
 
 
 class Parser:
 
-    def __init__(self):
-        self.brackets = {
-            "(": ")",
-            "[": "]"
-        }
+    @staticmethod
+    def default():
+        parser = Parser()
+        parser.add_bracket("(", ")")
+        for op in (_Implicit, _Add, _Sub, _Mul, _Div, _Pow):
+            parser.add_operator(op)
 
-        self.operators = {
-        }
+    def __init__(self):
+        self.brackets: _Dict[str, str] = {}
+        self.operators: _Dict[str, _Operator] = {}
 
     def add_operator(self, operator: _Operator):
         self.operators[operator.symbol] = operator
+
+    def add_bracket(self, opening, closing):
+        self.brackets[opening] = closing
 
     def _is_opening_bracket(self, string: str) -> bool:
         return string in self.brackets.keys()

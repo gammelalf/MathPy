@@ -10,9 +10,7 @@ __all__ = [
 ]
 
 
-_default_parser = Parser()
-for op in [default.Implicit, default.Add, default.Sub, default.Mul, default.Div, default.Pow]:
-    _default_parser.add_operator(op)
+_default_parser = Parser.default()
 
 
 def parse(expr: str):
