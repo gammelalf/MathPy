@@ -1,4 +1,5 @@
-from expr_parser.parse_numeric import _is_numeric, _parse_numeric_const
+import re as _re
+
 from expr_parser.build_tree import _process_scope
 from expr_parser.tree import Operator as _Operator
 from expr_parser.tree import Var as _Var
@@ -127,3 +128,22 @@ class Parser:
 
     def parse(self, expr: str):
         return self._group(self._tokenize_with_implicit(expr), process_scope=_process_scope)
+
+
+__numeric_re = _re.compile(r"^(\d+)?(\.\d*)?$")
+
+
+def _is_numeric(string):
+    return __numeric_re.match(string) is not None and string != "."
+
+
+def _parse_numeric_const(string) -> _Const:
+    try:
+        return _Const(int(string))
+    except ValueError:
+        pass
+    try:
+        return _Const(float(string))
+    except ValueError:
+        pass
+    raise ValueError(f"'{string}' is neither an int or float")
