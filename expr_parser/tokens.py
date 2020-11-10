@@ -1,7 +1,7 @@
 import re
 from functools import wraps
 
-from parse.tree import Operator, Const, Var
+from expr_parser.tree import Operator, Const, Var
 
 
 __numeric_re = re.compile(r"^(\d+)?(\.\d*)?( ?i)?$")

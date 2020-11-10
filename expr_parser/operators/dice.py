@@ -6,7 +6,7 @@ Implement a dice operator:
 
 from random import randint
 
-from parse.tree import Operator as _Operator
+from expr_parser.tree import Operator as _Operator
 
 
 class _Dice(_Operator):

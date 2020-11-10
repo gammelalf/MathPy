@@ -4,7 +4,7 @@ Provide implementation for the basic math operators:
 +, -, *, /, ^
 """
 
-from parse.tree import Operator as _Operator
+from expr_parser.tree import Operator as _Operator
 
 
 class _Implicit(_Operator):

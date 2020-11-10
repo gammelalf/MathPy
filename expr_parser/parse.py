@@ -1,8 +1,8 @@
-from parse.tokens import tokenize as _tokenize
-from parse.group import group as _group
-from parse.tree import BinOp as _BinOp
-from parse.tree import UnaryOp as _UnaryOp
-from parse.tree import Operator as _Operator
+from expr_parser.tokens import tokenize as _tokenize
+from expr_parser.group import group as _group
+from expr_parser.tree import BinOp as _BinOp
+from expr_parser.tree import UnaryOp as _UnaryOp
+from expr_parser.tree import Operator as _Operator
 
 
 __all__ = [
