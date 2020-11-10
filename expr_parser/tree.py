@@ -1,4 +1,5 @@
 import math as _math
+from functools import wraps as _wraps
 from typing import TypeVar as _TypeVar
 from typing import Dict as _Dict
 
@@ -35,6 +36,20 @@ class Operator(metaclass=_OperatorMeta):
             return self.unary(right)
         else:
             return self.binary(left, right)
+
+    @staticmethod
+    def handle_callables(func):
+        @_wraps(func)
+        def new_func(self, x, y):
+            if callable(x) and callable(y):
+                return lambda i: func(self, x(i), y(i))
+            elif callable(x):
+                return lambda i: func(self, x(i), y)
+            elif callable(y):
+                return lambda i: func(self, x, y(i))
+            else:
+                return func(self, x, y)
+        return new_func
 
     @staticmethod
     def get(symbol: str) -> "Operator":

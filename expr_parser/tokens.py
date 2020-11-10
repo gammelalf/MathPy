@@ -93,9 +93,7 @@ def _add_implicit_operator(iterable):
 
     for next_token in iterator:
         yield token
-        if (isinstance(token, Const) and isinstance(next_token, Var)) \
-                or (isinstance(token, Var) and isinstance(next_token, Var)) \
-                or (isinstance(token, Var) and _is_opening_bracket(next_token)):
+        if isinstance(token, (Const, Var)) and (isinstance(next_token, (Const, Var)) or _is_opening_bracket(next_token)):
             yield Operator.get("==IMPLICIT==")
         token = next_token
 

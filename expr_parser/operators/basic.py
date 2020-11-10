@@ -16,7 +16,14 @@ class _Implicit(_Operator):
         return 10
 
     def binary(self, x, y):
-        return x * y
+        if callable(x) and callable(y):
+            return lambda i: x(y(i))
+        elif callable(x):
+            return x(y)
+        elif callable(y):
+            return lambda i: x * y(i)
+        else:
+            return x * y
 
 
 class _Add(_Operator):
@@ -27,6 +34,7 @@ class _Add(_Operator):
     def priority(self):
         return 0
 
+    @_Operator.handle_callables
     def binary(self, x, y):
         return x + y
 
@@ -42,6 +50,7 @@ class _Sub(_Operator):
     def priority(self):
         return 0
 
+    @_Operator.handle_callables
     def binary(self, x, y):
         return x - y
 
@@ -57,6 +66,7 @@ class _Mul(_Operator):
     def priority(self):
         return 10
 
+    @_Operator.handle_callables
     def binary(self, x, y):
         return x * y
 
@@ -72,6 +82,7 @@ class _Div(_Operator):
     def priority(self):
         return 10
 
+    @_Operator.handle_callables
     def binary(self, x, y):
         return x / y
 
@@ -87,6 +98,7 @@ class _Pow(_Operator):
     def priority(self):
         return 20
 
+    @_Operator.handle_callables
     def binary(self, x, y):
         return x ** y
 
