@@ -1,4 +1,5 @@
 import re as _re
+import math as _math
 from typing import Dict as _Dict
 
 from expr_parser.operators.base import Operator as _Operator
@@ -21,11 +22,22 @@ class Parser:
         parser.add_bracket("(", ")")
         for op in (_Implicit, _Add, _Sub, _Mul, _Div, _Pow):
             parser.add_operator(op)
+        parser.constants = {
+            "pi": _math.pi,
+            "e": _math.e,
+            "i": 1j,
+
+            "sin": _math.sin,
+            "cos": _math.cos,
+            "tan": _math.tan,
+            "log": _math.log
+        }
         return parser
 
     def __init__(self):
         self.brackets: _Dict[str, str] = {}
         self.operators: _Dict[str, _Operator] = {}
+        self.constants: _Dict = {}
 
     def add_operator(self, operator: _Operator):
         self.operators[operator.symbol] = operator
@@ -141,9 +153,11 @@ class Parser:
 
     def parse(self, expr: str):
         if self._is_operator("==IMPLICIT=="):
-            return self._group(self._tokenize_with_implicit(expr), process_scope=_tree_from_list)
+            tree = self._group(self._tokenize_with_implicit(expr), process_scope=_tree_from_list)
         else:
-            return self._group(self._tokenize(expr), process_scope=_tree_from_list)
+            tree = self._group(self._tokenize(expr), process_scope=_tree_from_list)
+        tree.set_initial_namespace(self.constants)
+        return tree
 
 
 __numeric_re = _re.compile(r"^(\d+)?(\.\d*)?$")

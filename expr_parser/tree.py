@@ -2,7 +2,7 @@ import math as _math
 from typing import (TypeVar as _TypeVar,
                     Dict as _Dict,
                     Set as _Set,
-                    Union as _Union)
+                    Union as _Union, Dict)
 
 from expr_parser.operators.base import Operator as _Operator
 
@@ -15,15 +15,6 @@ class MissingVariable(RuntimeError):
 
 
 class _Node:
-
-    MATH_CONST = {
-        "e": _math.e,
-        "pi": _math.pi,
-        "i": 1j,
-        "sin": _math.sin,
-        "cos": _math.cos,
-        "tan": _math.tan,
-    }
 
     def _eval(self, namespace: _Dict[str, _Numeric]) -> _Numeric:
         raise NotImplementedError()
@@ -43,15 +34,24 @@ class _Node:
         """
         return False
 
+    def _get_effective_namespace(self, namespace: _Dict[str, _Numeric]) -> _Dict[str, _Numeric]:
+        try:
+            return dict(self._namespace, **namespace)
+        except AttributeError:
+            return namespace
+
+    def set_initial_namespace(self, namespace: _Dict[str, _Numeric]):
+        self._namespace = namespace
+
     def eval(self, **namespace: _Numeric) -> _Numeric:
-        namespace = dict(_Node.MATH_CONST, **namespace)
+        namespace = self._get_effective_namespace(namespace)
         for var in self.used_variables:
             if var not in namespace:
                 raise MissingVariable(var)
         return self._eval(namespace)
 
     def simplify(self, **namespace: _Numeric) -> "_Node":
-        namespace = dict(_Node.MATH_CONST, **namespace)
+        namespace = self._get_effective_namespace(namespace)
         root = self._eval_partial(namespace)
         if isinstance(root, _Node):
             return root
