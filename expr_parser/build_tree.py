@@ -1,6 +1,6 @@
 from expr_parser.tree import BinOp as _BinOp
 from expr_parser.tree import UnaryOp as _UnaryOp
-from expr_parser.tree import Operator as _Operator
+from expr_parser.operators.base import Operator as _Operator
 
 
 def _process_scope(lst):

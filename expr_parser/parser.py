@@ -1,7 +1,7 @@
 import re as _re
 
 from expr_parser.build_tree import _process_scope
-from expr_parser.tree import Operator as _Operator
+from expr_parser.operators.base import Operator as _Operator
 from expr_parser.tree import Var as _Var
 from expr_parser.tree import Const as _Const
 
@@ -18,7 +18,7 @@ class Parser:
         }
 
     def add_operator(self, operator: _Operator):
-        self.operators[operator.SYMBOL] = operator
+        self.operators[operator.symbol] = operator
 
     def _is_opening_bracket(self, string: str) -> bool:
         return string in self.brackets.keys()
@@ -127,7 +127,10 @@ class Parser:
         return process_scope(result)
 
     def parse(self, expr: str):
-        return self._group(self._tokenize_with_implicit(expr), process_scope=_process_scope)
+        if self._is_operator("==IMPLICIT=="):
+            return self._group(self._tokenize_with_implicit(expr), process_scope=_process_scope)
+        else:
+            return self._group(self._tokenize(expr), process_scope=_process_scope)
 
 
 __numeric_re = _re.compile(r"^(\d+)?(\.\d*)?$")

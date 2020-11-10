@@ -1,69 +1,11 @@
 import math as _math
-from functools import wraps as _wraps
 from typing import TypeVar as _TypeVar
 from typing import Dict as _Dict
 
+from expr_parser.operators.base import Operator as _Operator
+
 
 _Numeric = _TypeVar("_Numeric", int, float, complex)
-
-
-class _OperatorMeta(type):
-
-    REGISTRY = {}
-
-    def __init__(cls, name, bases, dct):
-        super(_OperatorMeta, cls).__init__(name, bases, dct)
-        if dct["SYMBOL"] is not None:
-            _OperatorMeta.REGISTRY[dct["SYMBOL"]] = cls
-
-
-class Operator(metaclass=_OperatorMeta):
-
-    SYMBOL = None
-
-    @property
-    def priority(self):
-        raise NotImplementedError()
-
-    def binary(self, x, y):
-        raise NotImplementedError(f"{self} can't be used as a binary operator")
-
-    def unary(self, x):
-        raise NotImplementedError(f"{self} can't be used as a unary operator")
-
-    def __call__(self, right, left=None):
-        if left is None:
-            return self.unary(right)
-        else:
-            return self.binary(left, right)
-
-    @staticmethod
-    def handle_callables(func):
-        @_wraps(func)
-        def new_func(self, x, y):
-            if callable(x) and callable(y):
-                return lambda i: func(self, x(i), y(i))
-            elif callable(x):
-                return lambda i: func(self, x(i), y)
-            elif callable(y):
-                return lambda i: func(self, x, y(i))
-            else:
-                return func(self, x, y)
-        return new_func
-
-    @staticmethod
-    def get(symbol: str) -> "Operator":
-        return _OperatorMeta.REGISTRY[symbol]()
-
-    @staticmethod
-    def is_operator(symbol: str) -> bool:
-        return symbol in _OperatorMeta.REGISTRY
-
-    def __repr__(self):
-        return self.__class__.__name__+"()"
-
-    def __str__(self):
-        return self.__class__.SYMBOL
 
 
 class _Node:
@@ -90,7 +32,7 @@ class _Node:
 
 class BinOp(_Node):
 
-    def __init__(self, left: _Node, operator: Operator, right: _Node):
+    def __init__(self, left: _Node, operator: _Operator, right: _Node):
         self.left = left
         self.right = right
         self.operator = operator
@@ -101,7 +43,7 @@ class BinOp(_Node):
 
 class UnaryOp(_Node):
 
-    def __init__(self, operator: Operator, child: _Node):
+    def __init__(self, operator: _Operator, child: _Node):
         self.child = child
         self.operator = operator
 

@@ -4,21 +4,14 @@ Implement a dice operator:
 2d6 rolls two 6-sided dice and adds their results
 """
 
-from random import randint
+from random import randint as _randint
 
-from expr_parser.tree import Operator as _Operator
+from expr_parser.operators.base import Operator as _Operator
 
 
-class _Dice(_Operator):
-
-    SYMBOL = "d"
-
-    @property
-    def priority(self):
-        return 100
-
-    def binary(self, x, y):
-        return sum((randint(1, y) for i in range(x)))
-
-    def unary(self, x):
-        return randint(1, x)
+Dice = _Operator(
+    symbol="d",
+    priority=100,
+    unary=lambda x: _randint(1, x),
+    binary=lambda x, y: sum((_randint(1, y) for i in range(x)))
+)

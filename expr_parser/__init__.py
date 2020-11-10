@@ -1,5 +1,5 @@
 from expr_parser.parser import Parser
-from expr_parser.operators import basic
+from expr_parser.operators import default
 
 
 __all__ = [
@@ -11,8 +11,8 @@ __all__ = [
 
 
 _default_parser = Parser()
-for op in [basic._Implicit, basic._Add, basic._Sub, basic._Mul, basic._Div, basic._Pow]:
-    _default_parser.add_operator(op())
+for op in [default.Implicit, default.Add, default.Sub, default.Mul, default.Div, default.Pow]:
+    _default_parser.add_operator(op)
 
 
 def parse(expr: str):
