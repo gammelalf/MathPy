@@ -3,7 +3,6 @@ from functools import wraps
 
 from expr_parser.tree import Operator, Const, Var
 
-
 __numeric_re = re.compile(r"^(\d+)?(\.\d*)?( ?i)?$")
 
 
@@ -27,21 +26,25 @@ def _parse_numeric_const(string) -> Const:
 
     if imaginary:
         if decimals:
-            return Const(complex(leading+decimals+"j"))
+            return Const(complex(leading + decimals + "j"))
         else:
-            return Const(complex(leading+"j"))
+            return Const(complex(leading + "j"))
     elif decimals:
-        return Const(float(leading+decimals))
+        return Const(float(leading + decimals))
     else:
         return Const(int(leading))
 
 
 BRACKETS = {
-            "(": ")",
-            "[": "]",
-            "{": "}",
-            "<": ">"
-        }
+    "(": ")",
+    "[": "]",
+    "{": "}",
+    "<": ">"
+}
+
+
+def _is_opening_bracket(string):
+    return string in BRACKETS.keys()
 
 
 def _is_bracket(string):
@@ -70,7 +73,7 @@ def _tokenize(string: str):
             if token != "":
                 yield create_token(token)
                 token = ""
-        elif is_valid_token(token+char):
+        elif is_valid_token(token + char):
             token += char
         else:
             yield create_token(token)
@@ -90,7 +93,9 @@ def _add_implicit_operator(iterable):
 
     for next_token in iterator:
         yield token
-        if not isinstance(token, Operator) and not isinstance(next_token, Operator):
+        if (isinstance(token, Const) and isinstance(next_token, Var)) \
+                or (isinstance(token, Var) and isinstance(next_token, Var)) \
+                or (isinstance(token, Var) and _is_opening_bracket(next_token)):
             yield Operator.get("")
         token = next_token
 
