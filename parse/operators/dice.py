@@ -1,9 +1,15 @@
+"""
+Implement a dice operator:
+
+2d6 rolls two 6-sided dice and adds their results
+"""
+
 from random import randint
 
-from parse.tree import Operator
+from parse.tree import Operator as _Operator
 
 
-class Dice(Operator):
+class _Dice(_Operator):
 
     SYMBOL = "d"
 
