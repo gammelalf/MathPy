@@ -1,10 +1,10 @@
 import re as _re
 from typing import Dict as _Dict
 
-from expr_parser.build_tree import _process_scope
-from expr_parser.tree import Var as _Var
-from expr_parser.tree import Const as _Const
 from expr_parser.operators.base import Operator as _Operator
+from expr_parser.tree import (Var as _Var,
+                              Const as _Const,
+                              tree_from_list as _tree_from_list)
 from expr_parser.operators.default import (Implicit as _Implicit,
                                            Add as _Add,
                                            Sub as _Sub,
@@ -140,9 +140,9 @@ class Parser:
 
     def parse(self, expr: str):
         if self._is_operator("==IMPLICIT=="):
-            return self._group(self._tokenize_with_implicit(expr), process_scope=_process_scope)
+            return self._group(self._tokenize_with_implicit(expr), process_scope=_tree_from_list)
         else:
-            return self._group(self._tokenize(expr), process_scope=_process_scope)
+            return self._group(self._tokenize(expr), process_scope=_tree_from_list)
 
 
 __numeric_re = _re.compile(r"^(\d+)?(\.\d*)?$")
