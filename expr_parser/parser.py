@@ -21,6 +21,7 @@ class Parser:
         parser.add_bracket("(", ")")
         for op in (_Implicit, _Add, _Sub, _Mul, _Div, _Pow):
             parser.add_operator(op)
+        return parser
 
     def __init__(self):
         self.brackets: _Dict[str, str] = {}
