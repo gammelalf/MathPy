@@ -4,13 +4,10 @@ from typing import (TypeVar as _TypeVar,
                     Union as _Union)
 
 from expr_parser.operators.base import Operator as _Operator
+from expr_parser.error import MissingVariable
 
 
 _Numeric = _TypeVar("_Numeric", int, float, complex)
-
-
-class MissingVariable(RuntimeError):
-    pass
 
 
 class Tree:
